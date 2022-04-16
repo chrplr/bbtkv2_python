@@ -36,6 +36,25 @@ sensor_thresholds = { 'Mic1':63,
                       'Opto3':63, 
                       'Opto4':63}
 
+
+
+input_port_names = ('Keypad4', 'Keypad3', 'Keypad2', 'Keypad4',
+                     'Opto4', 'Opto3', 'Opto2', 'Opto1',
+                     'TTLin2', 'TTLin1', 'Mic2', 'Mic1')
+
+output_port_names = ('ActClose4', 'ActClose3', 'ActClose2', 'ActClose1',
+                     'TTLout2', 'TTLout1', 'Sounder2', 'Sounder1')
+
+
+
+
+def parse_dsc_event_line(line):
+    inputs = line[:12]
+    outputs = lines[12:20]
+    time_stamp = lines[20:]
+    
+    
+
 class BlackBoxToolKit:
     def __init__(self):
         # TODO: read parameters from ini file 
@@ -65,15 +84,15 @@ class BlackBoxToolKit:
         if (DEBUG):
             print('Waiting for response from BBTK...')
         s = ''
-        c = self.bbtk.read()
+        c = self.bbtk.read().decode()
         if (DEBUG):
-            sys.stdout.write(c.decode())
+            sys.stdout.write(c)
         while c != ';':
             if c != '\n':
-                s = s + c.decode()
-            c = self.bbtk.read()
+                s = s + c
+            c = self.bbtk.read().decode()
             if (DEBUG):
-                sys.stdout.write(c.decode())
+                sys.stdout.write(c)
         if (DEBUG):
                 sys.stdout.write('\n')
         return(s)
@@ -109,7 +128,7 @@ class BlackBoxToolKit:
 
     def set_sensor_thresholds(self, thresholds=None):
         self.send_command("SEPV")
-        if thresholds == None:
+        if thresholds is None:
             thresholds = self.thresholds
         for val in thresholds.values():
             self.send_command(str(val))
@@ -142,6 +161,15 @@ class BlackBoxToolKit:
         s2 = self.get_response()
         time.sleep(2)
 
+    def input_line_check(self, duration=5):
+        self.soft_reset()
+        self.send_command('ICHK')
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            resp = self.get_response()
+            print(resp)
+        self.soft_reset()
+        
     def digital_stimulus_capture(self, duration=5):
         self.clear_timing_data()
         self.send_command('DSCM')

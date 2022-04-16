@@ -1,15 +1,21 @@
-Python code to communicate with the BlackBox Toolkit v2
+The [BlackBox ToolKit v2](https://www.blackboxtoolkit.com/bbtkv2.html) is a device that allows psychologists to accuretly measure the timing of stimulation.
 
 
-The BBTK v2 communicates via a serial protocol over USB.
+<center>![The BBTKv2](bbtkv2.png)</center>
 
-The commands recognized by the box are described in the _API Guide_. 
+It communicates via a serial protocol over USB, using commands described in the _API Guide_ sold with the box. 
+
+This allows users to control the BBTKv2 without the Windows software provided by the parent company.
+
+In particular, it is possible to control the BBTKv2 using Python, under Linux or MacOSX, using the [pyserial module](https://pyserial.rtfd.io)
+
+That is the aim of the bbtkv2.py module provided here. 
+
+Before using it, we recommend to check the communication between the BBTKv2 and the PC using a serial communication program.
 
 
+# Checking the connection to the BBTK v2
 
-# Checking the connection to the Bbtk v2
-
-Before using Python to drive the BBTK v2, it is a good idea to check with an interactive serial communication program that everything s in order.
 
 (These instructions are specific to Linux)
 
@@ -56,6 +62,8 @@ Before using Python to drive the BBTK v2, it is a good idea to check with an int
 
   *  Enter ``SPIE`` to erase internal memory. Check the display of the Bbtkv2.
 
+  *  Enter ``ICHK`` and create events  (e.g. putting a light on/off on a photodetector), each event should generate the display of a line with 12 binary digits. Send a Break `CTRL-A Z F` to interupt the process;
+
   * To capture events for 10s:
   
       DSCM
@@ -64,6 +72,10 @@ Before using Python to drive the BBTK v2, it is a good idea to check with an int
       RUDS
 
 
-![](bbtkv2_minicom.png)
+   ![](bbtkv2_minicom.png)
+
+
+   The information about the events is provided in the `SDAT;` and `EDAT;` lines.
+   The lines containing 32 digits encode the events in the following manner: the first 12 digits reprenet the status of input ports, the next 8 digits describe the ouput ports (and should all be zero with the DSC command), and the last 12 digits indicate the time in microseconds since the start of the acquisition run.
 
 
