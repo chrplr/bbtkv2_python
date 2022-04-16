@@ -11,7 +11,7 @@ This allows users to control the BBTKv2 without the Windows software provided by
 
 In particular, it is possible to control the BBTKv2 with Python using the [pyserial module](https://pyserial.rtfd.io)
 
-That is the aim of the [bbtkv2.py](https://github.com/chrplr/bbtkv2_python/blob/main/bbtkv2.py) module provided here. 
+This is the aim of the [bbtkv2.py](https://github.com/chrplr/bbtkv2_python/blob/main/bbtkv2.py) module provided here. 
 
 Before using it, we recommend users to check the communication between the BBTKv2 and the PC using a serial communication program, following instructions in the next section.
 
