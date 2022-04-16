@@ -169,7 +169,7 @@ def test_acquisition():
     bb = BlackBoxToolKit()
     bb.connect()
     bb.display_info_on_bbtk()
-    #bb.set_sensor_thresholds()
+    bb.set_sensor_thresholds()
     bb.clear_timing_data()
     nevents = bb.digital_stimulus_capture(5)
     print("%d events detected" % nevents )
