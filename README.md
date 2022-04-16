@@ -1,7 +1,8 @@
+<p align="center">
+![The BBTKv2](bbtkv2.png)
+</p>
+
 The [BlackBox ToolKit v2](https://www.blackboxtoolkit.com/bbtkv2.html) is a device that allows psychologists to accuretly measure the timing of stimulation.
-
-
-<center>![The BBTKv2](bbtkv2.png)</center>
 
 It communicates via a serial protocol over USB, using commands described in the _API Guide_ sold with the box. 
 
