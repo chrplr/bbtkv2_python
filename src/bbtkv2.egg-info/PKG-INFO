@@ -1,31 +1,47 @@
+Metadata-Version: 2.1
+Name: bbtkv2
+Version: 0.0.1
+Summary: Code to control the BlackBox ToolKit v2 device for audio-visual timing checks
+Home-page: https://github.com/chrplr/bbtkv2_python
+Author: Christophe Pallier
+Author-email: christophe@pallier.org
+License: UNKNOWN
+Project-URL: Bug Tracker, https://github.com/chrplr/bbtkv2_python/issues
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 <p align="center">
 
-![](images/bbtkv2.png)
+![](bbtkv2.png)
 
 </p>
 
 The [BlackBox ToolKit v2](https://www.blackboxtoolkit.com/bbtkv2.html) is a device that allows psychologists to accurately measure the timing of audio-visual stimuli.
 
-The BBTKv2 communicates via a serial protocol over USB. Thus, it is possible to drive it without the Windows software provided by the parent company.
+The BBTKv2 communicates via a serial protocol over USB, using commands described in the _API Guide_ sold with the box. 
+This allows users to control the BBTKv2 without the Windows software provided by the parent company.
 
-The commands recognized by the BBTKv2 are described in its _API Guide_. 
+In particular, it is possible to control the BBTKv2 with Python using the [pyserial module](https://pyserial.rtfd.io)
 
-The _bbtkv2_ python module we provide here encapsualtes (some of) these commands, relying on the [pyserial module](https://pyserial.rtfd.io).
+This is the aim of the [bbtkv2.py](https://github.com/chrplr/bbtkv2_python/blob/main/bbtkv2.py) module provided here. 
 
-# Installation
-
-Just run:
-
-    pip install bbtkv2
-   
-(Note: Should the pip command not work, just copy [bbtkv2.py](https://github.com/chrplr/bbtkv2_python/blob/main/src/bbtkv2.py), and make sure you have the pyserial module installed)
+Before using it, we recommend users to check the communication between the BBTKv2 and the PC using a serial communication program, following instructions in the next section.
 
 
+# Checking the connection to the BBTK v2
 
-# Check the BBTK v2 using a serial communication software
 
-Before using the python module, we recommend to check the communication between the BBTKv2 and the PC using a serial communication program, following instructions in the next section.
+(These instructions are specific to Linux)
 
+
+0. Install the Minicom serial communication program
+
+         sudo apt install minicom
 
 1. Power on the Bbtk_v2, then link it through USB cable to your computer
 
@@ -37,11 +53,11 @@ Before using the python module, we recommend to check the communication between 
         [BaudRate]
         230400
 
-2. Launch a serial communication program (e.g. minicom if you are runnning Linux --- you may have to install it with `sudo apt install minicom`), and open `/dev/ttyACM0`, set the configuration to 8bits, NoParity, and a Buda RAte equal to the one you read from the `BBTK.ini` file. 
+2. Launch Minicom:
 
 	minicom -8 -D /dev/ttyACM0 -b 230400
 
-   The terminal should display something like::
+   The terminal should display:
   
         Welcome to minicom 2.7.1                                                                             
                                                                                                      
@@ -75,22 +91,12 @@ Before using the python module, we recommend to check the communication between 
       RUDS
 
 
-   ![](images/bbtkv2_minicom.png)
+   ![](bbtkv2_minicom.png)
 
 
    The information about the events is provided in the `SDAT;` and `EDAT;` lines.
    The lines containing 32 digits encode the events in the following manner: the first 12 digits reprenet the status of input ports, the next 8 digits describe the ouput ports (and should all be zero with the DSC command), and the last 12 digits indicate the time in microseconds since the start of the acquisition run.
 
 
-# Acquiring timing data using the bbtkv2 python module
 
-    from bbtkv2 import BlackBokToolKit
 
-    bb = BlackBoxToolKit()
-    bb.connect()
-    bb.display_info_on_bbtk()
-    bb.set_sensor_thresholds()
-    bb.clear_timing_data()
-    nevents = bb.digital_stimulus_capture(5)
-    print("%d events detected" % nevents )
-    bb.disconnect()
