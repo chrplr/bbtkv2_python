@@ -25,7 +25,9 @@ The principle of operation is simple. Three pieces of equipement are needed:
    detectors) disposed on the stimulation device.
 #. A host computer controlling the bbtkv2 (hooked to it via a USB cable).
 
-  
+.. note:
+   The stimulation PC and the host PC can be a single computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to setup the BBTKv in recording mode, then perform the stimulations and, when done, read the timing data from the BBTKv2.  
+   
 The BBTKv2 communicates with the host PC via commands send by a serial
 protocol over USB.
 
@@ -36,12 +38,11 @@ Once the period has elapsed, the bbtkv2 sends the list of all events,
 along with their timestamps, to the host computer.
 
 
-The *bbtkv2* python module provided here encapsulates (some of) the
+The *bbtkv2* Python module provided here encapsulates (some of) the
 commands described in *The BBTKv2 API Guide* sold by the parent company. 
 
 
-
-Installing the python module
+Installing the Python module
 ----------------------------
 
 Just run::
@@ -61,6 +62,16 @@ in *The BBTKv2 API Guide*  using *TeraTerm VT* under sWindows. In the
 next chapter, we explain how to perfom the same operation under Linux,
 using *Minicom*.
 
+One important paramater is the baudrate (speed of transmission of information over the the serial connection). When you plug the BBTKv2 in, a USB storage device named ``BBTKV2`` is mounted, which contains a file ``BBTK.ini`` specifying this parameter. On my computer::
+
+       $ cat BBTKV2/BBTK.ini 
+       [BaudRate]
+       230400
+
+
+If you notice that the transmission is garbled, you should decrease this speed in the ``BBTK.ini`` file and reboot the BBTKv2 box.
+
+
 
 Using the bbtkv2 module to capture events
 -----------------------------------------
@@ -76,6 +87,8 @@ Launch `ipython` and type:
    print(df)
 
 
+
+   
 .. [1] Nowadays, one could build a “poor man's” Blackboxtoolkit around
        an Arduino or a Raspberry Pi. But it would take quite a bit of
        time to build the right sensors and validate them. If you have

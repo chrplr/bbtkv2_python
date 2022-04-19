@@ -18,7 +18,7 @@ In a nutshell:
 
 # Documentation
 
-Check <https://bbtkv2.rtfd.io/en/latest/>
+Check <https://bbtkv2.readthedocs.io/en/latest/intro.html>
 
 
 # Installation

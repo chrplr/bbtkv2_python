@@ -10,9 +10,7 @@ following instructions in the next section.
    A usb-storage device ``BBTKV2`` should be detected and mounted, and a
    USB ACM device ``/dev/ttyACM0`` should have been created.
 
-   Determine the Baud Rate:
-
-   ::
+   Determine the Baud Rate::
 
        cat /media/*/BBTKV2/BBTK.ini 
        [BaudRate]
@@ -28,7 +26,6 @@ following instructions in the next section.
 
    The terminal should display something like::
 
-   ::
 
        Welcome to minicom 2.7.1                                                                             
 
@@ -58,9 +55,11 @@ following instructions in the next section.
    12 binary digits. Send a Break ``CTRL-A Z F`` to interupt the
    process;
 
--  To capture events for 10s:
-
-   DSCM TIML 10000000 RUDS
+-  To capture events for 10s::
+   
+       DSCM
+       TIML 10000000
+       RUDS
 
 .. image:: images/bbtkv2_minicom.png
 
