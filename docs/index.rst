@@ -6,14 +6,16 @@
 Welcome to bbtkv2's documentation!
 ==================================
 
-.. automodule:: bbtkv2
-    :members:
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   intro.rst	     
+   minicom.rst
+   api.rst
 
+	     
 
 Indices and tables
 ==================

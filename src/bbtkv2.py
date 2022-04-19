@@ -21,11 +21,10 @@ The **BlackBox ToolKit v2** is a device that allows psychologists to
 accurately measure the timing of audio-visual stimuli (see
 https://www.blackboxtoolkit.com/bbtkv2.html).
 
-This device communicates via a serial protocol over USB. The present
-module encapsualtes (most of) the commands described in the *API
+The device communicates via a serial protocol over USB. The present
+module encapsulates (most of) the commands described in the *API
 Guide* allowing to control the BBTKv2.
 
-It relies on `pyserial <https://pyserial.rtfd.io>`__.
 """
 
 import serial
