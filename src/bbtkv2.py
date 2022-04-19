@@ -1,5 +1,4 @@
-#! /usr/bin/env python3
-# Time-stamp: <2016-05-02 12:20:17 chrplr>
+# Time-stamp: <2022-04-19 10:04:14 christophe@pallier.org>
 
 #    Python moddule to communicate with the BlackBox ToolKit v2
 #    Copyright (C) 2014-2022  Christophe Pallier <christophe@pallier.org>
@@ -16,12 +15,23 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses
+"""Interface to the Blackbox Toolkit version 2 (BBTKv2)
 
-''' Interface with the Blackbox Toolkit version 2 (BBTKv2) '''
+The **BlackBox ToolKit v2** is a device that allows psychologists to
+accurately measure the timing of audio-visual stimuli (see
+https://www.blackboxtoolkit.com/bbtkv2.html).
+
+This device communicates via a serial protocol over USB. The present
+module encapsualtes (most of) the commands described in the *API
+Guide* allowing to control the BBTKv2.
+
+It relies on `pyserial <https://pyserial.rtfd.io>`__.
+"""
 
 import serial
 import time
 import sys
+import re
 import pandas as pd
 import toml
 
@@ -41,11 +51,12 @@ Opto1=110
 Opto2=110
 Opto3=110
 Opto4=110
+smoothing='11000011'
 """
 
-INPUT_PORT_NAMES = ('Keypad4', 'Keypad3', 'Keypad2', 'Keypad1',
-                    'Opto4', 'Opto3', 'Opto2', 'Opto1',
-                    'TTLin2', 'TTLin1', 'Mic2', 'Mic1')
+INPUT_PORT_NAMES = ('Keypad4', 'Keypad3', 'Keypad2', 'Keypad1', 'Opto4',
+                    'Opto3', 'Opto2', 'Opto1', 'TTLin2', 'TTLin1', 'Mic2',
+                    'Mic1')
 
 OUTPUT_PORT_NAMES = ('ActClose4', 'ActClose3', 'ActClose2', 'ActClose1',
                      'TTLout2', 'TTLout1', 'Sounder2', 'Sounder1')
@@ -57,9 +68,22 @@ DSC_LINE_NAMES = ['timestamp'] + \
 ###############################################################################
 
 CRLF = '\r\n'
-WT = 0.05  # waiting time (50 ms) between writes on serial port 
+WT = 0.05  # waiting time (50 ms) between writes on serial port
 
 ###############################################################################
+
+### Fonctions to parse the outputs of the bbtkv2 commands
+
+DSC_OUTPUT_EXAMPLE = """
+SDAT;
+3;
+30000000;
+120000;
+11001100110001010101000000123456;
+01001100110001010101000000234567;
+11001100110001010101000000345678;
+EDAT;
+"""
 
 
 def inp_port_mask12_to_series(mask12):
@@ -82,59 +106,54 @@ def dsc_mask32_to_list(mask32):
     return [time_stamp] + [int(b) for b in mask32[:20]]
 
 
-DSC_OUTPUT_EXAMPLE = """
-SDAT;
-3;
-30000000;
-120000;
-11001100110001010101000000123456;
-01001100110001010101000000234567;
-11001100110001010101000000345678;
-EDAT;
-"""
-
-
 def dsc_output_to_dataframe(text):
+    """convert the fixed record output format of the DSCM command to a pandas dataframe.
+
+    :param text: string containing ';' separated lines with 32 digits.
+
+    :return: a dataframe with a time-stamp column and the state of all sensors, and one event per row.
+    """
+    
     all_events = []
     for row in text.split(';'):
         line = row.strip()
         if len(line) == 32:
-            all_events.append(dsc_mask32_to_list(line))
-    df = pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
-    return df
+            time_stamp = int(line[20:]) / 1000.0  # convert to msec
+            all_events.append([time_stamp] + [int(b) for b in mask32[:20]])
 
-
-# a = '11001100110001010101000123456789'
-# bbtkv2.dsc_mask32_to_series(a)
-
-# [123456.789,
-#  Keypad4    1
-#  Keypad3    1
-#  Keypad2    0
-#  Keypad4    0
-#  Opto4      1
-#  Opto3      1
-#  Opto2      0
-#  Opto1      0
-#  TTLin2     1
-#  TTLin1     1
-#  Mic2       0
-#  Mic1       0
-#  dtype: int64,
-#  ActClose4    0
-#  ActClose3    1
-#  ActClose2    0
-#  ActClose1    1
-#  TTLout2      0
-#  TTLout1      1
-#  Sounder2     0
-#  Sounder1     1
-#  dtype: int64]
+    return pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
 
 
 class BlackBoxToolKit:
+    """Interface to a [BlackBox ToolKit v2 device](https://www.blackboxtoolkit.com/bbtkv2.html).
+    """
     def __init__(self, config_file=None, config_string=None):
-        """ Read configuration and opens the serial port associated to the bbtk. """
+        """Open the serial port associated to the BBTKv2 and sets the input sensor_thresholds.
+
+        :param config_file: filename of a toml file containing the configuration.
+
+        Example of a ``bbtkv2.toml`` configuration file:
+
+        .. code-block:: TOML
+        
+             serialport="/dev/ttyACM0"
+             baudrate=230400
+             debug=1
+
+             [sensor_thresholds]
+             Mic1=0
+             Mic2=0
+             Sounder1=0
+             Sounder2=0
+             Opto1=110
+             Opto2=110
+             Opto3=110
+             Opto4=110
+             smoothing='11000011'
+
+        :param config_string: parameters listed in a string respecting toml syntax
+
+        """
         if config_file is not None:
             self.settings = toml.load(config_file)
         elif config_string is not None:
@@ -157,11 +176,12 @@ class BlackBoxToolKit:
                                   rtscts=False,
                                   dsrdtr=False,
                                   writeTimeout=1)
-      
+
         self.thresholds = self.settings['sensor_thresholds']
         self.connect()
+        self.set_smoothing(self.settings['sensor_thresholds']['smoothing'])
         self.set_sensor_thresholds()
-        
+
     def get_current_settings(self):
         return self.settings
 
@@ -169,20 +189,58 @@ class BlackBoxToolKit:
         settings = toml.load(filename)
         self.thresholds = settings['sensor_thresholds']
 
-    def soft_reset(self):
+    def connect(self):
+        """Initiate a connection to the BBTKv2.
+        """
+        self.send_break()
+        self.send_command('CONN')
+        resp = self.read_line()
+        if resp != 'BBTK;':
+            raise Exception('Cannot connect to BBTK ')
+        time.sleep(1)  # wait for 1 s
+
+    def send_break(self):
+        """Send a break to the BBTK, requiring it to perform a soft reset.
+        """
         if (self.debug):
-            print('Sending a soft break to the BBTK')
+            print('Sending a break to the BBTK')
         self.bbtk.sendBreak()
 
+    def disconnect(self):
+        """Close the serial connection to the BBTKv2.
+        """
+        self.bbtk.close()
+
+    def is_alive(self):
+        """Check if the BBTKv2 is responsive.
+        """
+        self.send_command('ECHO')
+        return self.read_line() == 'ECHO'
+
+    def flush(self):
+        """Flush the USB buffer.
+        """
+        self.send_command('FLUS')
+        time.sleep(2)
+
     def send_command(self, cmd):
+        """write ``cmd`` on the serial port, then send a CR+LF.
+
+        :param cmd: command to send
+        :type cmd: string
+        
+        """
         if self.debug:
             print('Sending: ' + cmd)
         self.bbtk.write((cmd + CRLF).encode())
         time.sleep(WT)
 
     def get_response(self, timeout=10):
-        """ accumulates characters from serial channel.
-            Returns the string of characters.
+        """Accumulates characters from the serial channel, for a certain duration.
+
+        :param timeout: time during which to wait for messages from the bbtkv2. 
+
+        :return:  the text sent by the BBTLv2.
         """
         start_time = time.time()
         data_str = ""
@@ -197,10 +255,10 @@ class BlackBoxToolKit:
         return data_str
 
     def read_line(self):
-        """ accumulates characters from serial channel until a '\n' is reached.
-            Returns the string of characters.
+        """Read a single line from the bbtkv2 (blocking! No timeout) 
+        
+        :return: the string of characters.
         """
-        # TODO: this is currenlty blocking on input :(
         time.sleep(WT)
         if (self.debug):
             print('Waiting for response from BBTK...')
@@ -217,42 +275,56 @@ class BlackBoxToolKit:
                 sys.stdout.write(c)
         if (self.debug):
             sys.stdout.write('\n')
-        return(s)
-
-    def connect(self):
-        self.soft_reset()
-        self.send_command('CONN')
-        resp = self.read_line()
-        if resp != 'BBTK;':
-            raise Exception('Cannot connect to BBTK ')
-        time.sleep(1)  # wait for 1 s
-
-    def disconnect(self):
-        self.bbtk.close()
+        return (s)
 
     def get_firmware_version(self):
         self.send_command('FIRM')
         return self.read_line()
 
-    def display_info_on_bbtk(self):
+    def display_info_on_bbtk_display(self):
         self.send_command('ABOU')
         time.sleep(2)
 
-    def is_alive(self):
-        self.send_command('ECHO')
-        return self.read_line() == 'ECHO'
-        
-    def set_smoothing_off(self):
+    def set_smoothing(self, mask):
+        """Set smoothing to Opto and Mic sensors.
+        When smoothin is 'off', you will detect *all* leading edges, e.g. each refreshes on a CRT.
+        When smoothing is 'on', you need to subtract 20ms from offset times.
+
+        :param mask: a 8 binary mask ``Mic1:Mic2:Opto4:Opto3:Opto2:Opto1:NA:NA``
+        :type mask: str
+        """
         self.send_command('SMOO')
-        self.send_command('00000011')
+        self.send_command(mask)
         return self.is_alive()
 
-    def set_smoothing_on(self):
-        self.send_command('SMOO')
-        self.send_command('11111111')
-        return self.is_alive()
-    
+    # def set_crt_smoothing(self):
+    #     self.smothing
+    #     self.send_command('SMOO')
+    #     self.send_command('00111111')
+    #     return self.is_alive()
+
+    # def unset_crt_smoothing(self):
+    #     self.send_command('SMOO')
+    #     self.send_command('00000011')
+    #     return self.is_alive()
+
+    # def set_mic_smoothing(self):
+    #     self.send_command('SMOO')
+    #     self.send_command('11000011')
+    #     return self.is_alive()
+
+    # def unset_mic_smoothing(self):
+    #     self.send_command('SMOO')
+    #     self.send_command('00000011')
+    #     return self.is_alive()
+
     def set_sensor_thresholds(self, thresholds=None):
+        """Send thresholds to the BBTKv2.
+
+        :param thresholds: dictionary {sensor_name: value (int between 0 and 127)}
+
+        :return: bool (True=the bbtk is alive; False: somehting wrong occurred, check.)
+        """
         self.send_command("SEPV")
         if thresholds is None:
             thresholds = self.thresholds
@@ -260,22 +332,26 @@ class BlackBoxToolKit:
             self.send_command(str(val))
         return self.is_alive()
 
-    def flush(self):
-        self.send_command('FLUS')
-        time.sleep(2)
-
     def get_sensor_thresholds(self):
+        """Read the values of the 8 input sensor thresholds.
+
+        :return: a dict {sensor_name: value (int between 0 and 127)} 
+        """
+        self.send_break()
+        time.sleep(0.2)
         self.send_command('GEPV')
         resp = self.read_line()
-        vals = [int(s) for s in resp.split(',')]
-        return {'Mic1': vals[0],
-                'Mic2': vals[1],
-                'Sounder1':  vals[2],
-                'Sounder2': vals[3],
-                'Opto1': vals[4],
-                'Opto2': vals[5],
-                'Opto3': vals[6],
-                'Opto4': vals[7]}
+        vals = [int(x) for x in re.findall('\d+', resp)]
+        return {
+            'Mic1': vals[0],
+            'Mic2': vals[1],
+            'Sounder1': vals[2],
+            'Sounder2': vals[3],
+            'Opto1': vals[4],
+            'Opto2': vals[5],
+            'Opto3': vals[6],
+            'Opto4': vals[7]
+        }
 
     def clear_timing_data(self):
         self.send_command('SPIE')
@@ -284,22 +360,70 @@ class BlackBoxToolKit:
         time.sleep(2)
 
     def input_line_check(self, duration=5):
-        self.soft_reset()
+        """Detect events on the input line and print them.
+        
+        :param duration: duration before sending soft break, in s
+        :type duration: int
+
+        :return: None
+        """
+        self.send_break()
         self.send_command('ICHK')
         start_time = time.time()
         while time.time() - start_time < duration:
             resp = self.read_line()
-        self.soft_reset()
+            print(resp)
+        self.send_break()
+
+    def output_lines_check(self, mask):
+        """Send a pattern to the 8 output lines ('ActClose4', 'ActClose3', 'ActClose2', 'ActClose1',
+        'TTLout2', 'TTLout1', 'Sounder2', 'Sounder1').
+
+        :param mask: 8 bits mask
+        :type mask: str
+        
+        :return: None
+        
+        To interrupt a sounder, call ``send_break()``
+
+        """
+        self.send_break()
+        self.send_command('OCHK')
+        self
 
     def digital_stimulus_capture(self, duration=30):
+        """Launches a digital data capture session.
+
+        :param duration:  duration of acquisition in seconds
+        :type duration: int
+
+        :return: a dataframe listing the events
+        """
         self.clear_timing_data()
         self.send_command('DSCM')
         self.send_command('TIML')
-        self.send_command(str(duration*1000000))
+        self.send_command(str(duration * 1000000))
         self.send_command('RUDS')
         time.sleep(duration)
         text = self.get_response(5)
         return dsc_output_to_dataframe(text)
+
+    def event_generation_pulse_train(self,
+                                     timings=[
+                                         '100,1000,00000001',
+                                         '100,1000,00000000'
+                                     ]):
+        self.send_break()
+        time.sleep(.5)
+        self.send_command('PRPT')
+        self.send_command('TIML')
+        self.send_command('0')
+        for row in timings:
+            self.send_command(row)
+
+        self.send_command('PCPT')
+        self.send_command('RUPT')
+        # now the program will run until a break is sent to the bbtkv2
 
 
 def test_acquisition():
@@ -308,6 +432,6 @@ def test_acquisition():
     print(events)
     bb.disconnect()
 
-    
+
 if __name__ == '__main__':
     test_acquisition()
