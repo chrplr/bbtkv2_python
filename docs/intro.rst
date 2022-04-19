@@ -18,11 +18,12 @@ The **BlackBox ToolKit v2** is a device that allows psychologists to
  (generating sound or TTL signal. (See
  https://www.blackboxtoolkit.com/bbtkv2.html for more information) [1]_.
 
-The princle of operation is simple. Three pieces of equipement are needed:
-#. A stimulation device (Typically a computer) 
+The principle of operation is simple. Three pieces of equipement are needed:
+
+#. A stimulation device (typically a computer) 
 #. The bbtkv2 with input sensors (photodiodes, sound detectors, TTL
    detectors) disposed on the stimulation device.
-#. A host computer controling the bbtkv2 (hooked to it via a USB cable).
+#. A host computer controlling the bbtkv2 (hooked to it via a USB cable).
 
   
 The BBTKv2 communicates with the host PC via commands send by a serial
@@ -75,3 +76,8 @@ Launch `ipython` and type:
    print(df)
 
 
+.. [1] Nowadays, one could build a “poor man's” Blackboxtoolkit around
+       an Arduino or a Raspberry Pi. But it would take quite a bit of
+       time to build the right sensors and validate them. If you have
+       a BBTKv2 around you, or enough money to acquire one, it will
+       save you time.

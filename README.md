@@ -1,6 +1,6 @@
 <p align="center">
 
-![](images/bbtkv2.png)
+![](docs/images/bbtkv2.png)
 
 </p>
 
