@@ -1,4 +1,7 @@
 _build/
 __pycache__/
+**/__pycache__/
 dist/
 **/*~
+build/
+**/bbtkv2.egg-info/
