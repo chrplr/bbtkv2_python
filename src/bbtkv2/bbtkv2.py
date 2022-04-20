@@ -342,7 +342,7 @@ class BlackBoxToolKit:
 
     def set_smoothing(self, mask):
         """Set smoothing to Opto and Mic sensors.
-        When smoothin is 'off', you will detect *all* leading edges, e.g. each refreshes on a CRT.
+        When smoothin is 'off', you will detect *all* leading edges, e.g. each refresh on a CRT.
         When smoothing is 'on', you need to subtract 20ms from offset times.
 
         :param mask: a 8 binary mask ``Mic1:Mic2:Opto4:Opto3:Opto2:Opto1:NA:NA``
@@ -402,12 +402,10 @@ class BlackBoxToolKit:
 
         :return: a dict {sensor_name: value (int between 0 and 127)} 
         """
-        self.send_break()
-        time.sleep(0.2)
         self.send_command('GEPV')
         resp = self.read_line()
         vals = [int(x) for x in re.findall('\d+', resp)]
-        return {
+        levels = {
             'Mic1': vals[0],
             'Mic2': vals[1],
             'Sounder1': vals[2],
@@ -417,6 +415,15 @@ class BlackBoxToolKit:
             'Opto3': vals[6],
             'Opto4': vals[7]
         }
+        self.settings['sensor_thresholds'] = levels
+        return levels
+
+    def adjust_sensors_levels(self):
+        self.send_command('AJPV')
+        response = ''
+        while response != 'Done;':
+            response = self.read_line()
+        self.get_sensor_thresholds()
 
     def clear_timing_data(self):
         self.send_command('SPIE')
@@ -449,12 +456,12 @@ class BlackBoxToolKit:
         
         :return: None
         
-        To interrupt a sounder, call ``send_break()``
+        To interrupt a sounder, set its bit to 0 or call ``send_break()``
 
         """
-        self.send_break()
         self.send_command('OCHK')
-        self
+        self.send_command(mask)
+
 
     def digital_stimulus_capture(self, duration=30):
         """Launches a digital data capture session.
