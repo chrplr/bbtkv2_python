@@ -25,7 +25,7 @@ The principle of operation is simple. Three pieces of equipement are needed:
    detectors) disposed on the stimulation device.
 #. A host computer controlling the bbtkv2 (hooked to it via a USB cable).
 
-.. note:
+.. note::
    The stimulation PC and the host PC can be a single computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to setup the BBTKv in recording mode, then perform the stimulations and, when done, read the timing data from the BBTKv2.  
    
 The BBTKv2 communicates with the host PC via commands send by a serial

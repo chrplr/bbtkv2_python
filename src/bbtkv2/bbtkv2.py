@@ -31,7 +31,8 @@ import serial
 import time
 import sys
 import re
-import pandas as pd
+import csv
+#import pandas as pd   # removed dependency to pandas
 import toml
 
 ##############################################################################
@@ -42,14 +43,16 @@ baudrate=230400
 debug=1
 
 [sensor_thresholds]
-Mic1=0
-Mic2=0
-Sounder1=0
-Sounder2=0
+Mic1=63
+Mic2=63
+Sounder1=63
+Sounder2=63
 Opto1=110
 Opto2=110
 Opto3=110
 Opto4=110
+
+[smoothing]
 smoothing='11000011'
 """
 
@@ -71,7 +74,7 @@ WT = 0.05  # waiting time (50 ms) between writes on serial port
 
 ###############################################################################
 
-### Fonctions to parse the outputs of the bbtkv2 commands
+## Fonctions to parse the outputs of the bbtkv2 commands
 
 DSC_OUTPUT_EXAMPLE = """
 SDAT;
@@ -97,20 +100,23 @@ def out_port_mask8_to_series(mask8):
     return pd.Series([int(b) for b in mask8], index=OUTPUT_PORT_NAMES)
 
 
-def dsc_mask32_to_list(mask32):
-    assert type(mask32) is str
-    assert len(mask32) == 32
-    # the time-stamp (in microsec) is stored as the last 12 digits
-    time_stamp = int(mask32[20:]) / 1000.0  # convert to msec
-    return [time_stamp] + [int(b) for b in mask32[:20]]
-
-
-def dsc_output_to_dataframe(text):
+def dsc_output_to_list(text):
     """convert the fixed record output format of the DSCM command to a pandas dataframe.
 
     :param text: string containing ';' separated lines with 32 digits.
 
-    :return: a dataframe with a time-stamp column and the state of all sensors, and one event per row.
+    :return: a list of events where each event is a list containing a time-stamp in millisecond
+             following by twenty bit values representing the states of the input/output ports.
+
+    If pandas is available, you can transform this into a DataFrame with:
+
+    .. code-block:: python
+    
+        pandas.DataFrame(events, columns=['Timestamp', 'Keypad4', 'Keypad3', 'Keypad2', 'Keypad1',
+                                          'Opto4', 'Opto3', 'Opto2', 'Opto1', 'TTLin2', 'TTLin1', 'Mic2', 'Mic1',
+                                          'ActClose4', 'ActClose3', 'ActClose2', 'ActClose1',
+                                          'TTLout2', 'TTLout1', 'Sounder2', 'Sounder1'])
+
     """
     
     all_events = []
@@ -118,10 +124,22 @@ def dsc_output_to_dataframe(text):
         line = row.strip()
         if len(line) == 32:
             time_stamp = int(line[20:]) / 1000.0  # convert to msec
-            all_events.append([time_stamp] + [int(b) for b in mask32[:20]])
+            all_events.append([time_stamp] + [int(b) for b in line[:20]])
 
-    return pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
+    return all_events
+    #return pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
 
+
+def dsc_events_list_to_csv(dsc_events, filename):
+    """
+    :param dsc_events: list of lists of 21 elements (timestamps, and 20 bits)
+    :param filename: name of a csv file
+    """
+    with open(filename, "wt") as f:
+        writer = csv.writer(f)
+        writer.writerow(DSC_LINE_NAMES)
+        writer.writerows([dsc_events])
+    
 
 class BlackBoxToolKit:
     """Interface to a [BlackBox ToolKit v2 device](https://www.blackboxtoolkit.com/bbtkv2.html).
@@ -148,6 +166,8 @@ class BlackBoxToolKit:
              Opto2=110
              Opto3=110
              Opto4=110
+
+             [smoothing]
              smoothing='11000011'
 
         :param config_string: parameters listed in a string respecting toml syntax
@@ -176,18 +196,54 @@ class BlackBoxToolKit:
                                   dsrdtr=False,
                                   writeTimeout=1)
 
-        self.thresholds = self.settings['sensor_thresholds']
         self.connect()
-        self.set_smoothing(self.settings['sensor_thresholds']['smoothing'])
-        self.set_sensor_thresholds()
+        self.set_sensor_thresholds(self.settings['sensor_thresholds'])
+        self.set_smoothing(self.settings['smoothing']['smoothing'])
+        
 
     def get_current_settings(self):
+        """Get the settings stored in the bbtkv2 object (not on the BBTKv2 device!).
+        
+        :return: a dist containing the parameters and their values.
+        """
         return self.settings
 
-    def read_thresholds_from_toml_file(self, filename):
-        settings = toml.load(filename)
-        self.thresholds = settings['sensor_thresholds']
+    def set_debug_on(self):
+        """When debug is 'on', the input/output messages on the serial port are printed on the console.""" 
+        self.settings['debug'] = 1
+        
+    def set_debug_off(self):
+        """When debug is 'off', keep quiet.""" 
+        self.settings['debug'] = 0
 
+    def read_settings_from_toml_file(self, config_file):
+        """Read settings from a file and apply them.
+
+        :param config_file: filename of a toml file containing the configuration.
+
+        Example of a ``bbtkv2.toml`` configuration file:
+
+        .. code-block:: TOML
+        
+             serialport="/dev/ttyACM0"
+             baudrate=230400
+             debug=1
+
+             [sensor_thresholds]
+             Mic1=0
+             Mic2=0
+             Sounder1=0
+             Sounder2=0
+             Opto1=110
+             Opto2=110
+             Opto3=110
+             Opto4=110
+
+             [smoothing]
+             smoothing='11000011'
+        """
+        self.settings = toml.load(config_file)
+        
     def connect(self):
         """Initiate a connection to the BBTKv2.
         """
@@ -294,8 +350,10 @@ class BlackBoxToolKit:
         """
         self.send_command('SMOO')
         self.send_command(mask)
-        return self.is_alive()
+        time.sleep(1)
+        #return self.is_alive()
 
+    # TODO: implement fine grained manipulation of smoothing bits
     # def set_crt_smoothing(self):
     #     self.smothing
     #     self.send_command('SMOO')
@@ -324,11 +382,19 @@ class BlackBoxToolKit:
 
         :return: bool (True=the bbtk is alive; False: somehting wrong occurred, check.)
         """
-        self.send_command("SEPV")
         if thresholds is None:
-            thresholds = self.thresholds
-        for val in thresholds.values():
-            self.send_command(str(val))
+            thresholds = self.settings['sensor_thresholds']
+            
+        self.send_command("SEPV")
+        self.send_command(str(thresholds['Mic1']))
+        self.send_command(str(thresholds['Mic2']))
+        self.send_command(str(thresholds['Sounder1']))
+        self.send_command(str(thresholds['Sounder2']))
+        self.send_command(str(thresholds['Opto1']))
+        self.send_command(str(thresholds['Opto2']))
+        self.send_command(str(thresholds['Opto3']))
+        self.send_command(str(thresholds['Opto4']))
+        time.sleep(1)
         return self.is_alive()
 
     def get_sensor_thresholds(self):
@@ -429,6 +495,7 @@ def test_acquisition():
     bb = BlackBoxToolKit()
     events = bb.digital_stimulus_capture(30)
     print(events)
+    
     bb.disconnect()
 
 
