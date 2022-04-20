@@ -31,8 +31,7 @@ import serial
 import time
 import sys
 import re
-import csv
-#import pandas as pd   # removed dependency to pandas
+import pandas as pd
 import toml
 
 ##############################################################################
@@ -100,23 +99,13 @@ def out_port_mask8_to_series(mask8):
     return pd.Series([int(b) for b in mask8], index=OUTPUT_PORT_NAMES)
 
 
-def dsc_output_to_list(text):
+def dsc_output_to_dataframe(text):
     """convert the fixed record output format of the DSCM command to a pandas dataframe.
 
     :param text: string containing ';' separated lines with 32 digits.
 
-    :return: a list of events where each event is a list containing a time-stamp in millisecond
-             following by twenty bit values representing the states of the input/output ports.
-
-    If pandas is available, you can transform this into a DataFrame with:
-
-    .. code-block:: python
-    
-        pandas.DataFrame(events, columns=['Timestamp', 'Keypad4', 'Keypad3', 'Keypad2', 'Keypad1',
-                                          'Opto4', 'Opto3', 'Opto2', 'Opto1', 'TTLin2', 'TTLin1', 'Mic2', 'Mic1',
-                                          'ActClose4', 'ActClose3', 'ActClose2', 'ActClose1',
-                                          'TTLout2', 'TTLout1', 'Sounder2', 'Sounder1'])
-
+    :return: a dataframe with 21 columns: time-stamp (in milliseconds) 
+             followed by twenty bit values representing the states of the input/output ports.
     """
     
     all_events = []
@@ -126,20 +115,8 @@ def dsc_output_to_list(text):
             time_stamp = int(line[20:]) / 1000.0  # convert to msec
             all_events.append([time_stamp] + [int(b) for b in line[:20]])
 
-    return all_events
-    #return pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
+    return pd.DataFrame(all_events, columns=DSC_LINE_NAMES)
 
-
-def dsc_events_list_to_csv(dsc_events, filename):
-    """
-    :param dsc_events: list of lists of 21 elements (timestamps, and 20 bits)
-    :param filename: name of a csv file
-    """
-    with open(filename, "wt") as f:
-        writer = csv.writer(f)
-        writer.writerow(DSC_LINE_NAMES)
-        writer.writerows([dsc_events])
-    
 
 class BlackBoxToolKit:
     """Interface to a [BlackBox ToolKit v2 device](https://www.blackboxtoolkit.com/bbtkv2.html).
@@ -199,21 +176,20 @@ class BlackBoxToolKit:
         self.connect()
         self.set_sensor_thresholds(self.settings['sensor_thresholds'])
         self.set_smoothing(self.settings['smoothing']['smoothing'])
-        
-
+     
     def get_current_settings(self):
         """Get the settings stored in the bbtkv2 object (not on the BBTKv2 device!).
-        
+       
         :return: a dist containing the parameters and their values.
         """
         return self.settings
 
     def set_debug_on(self):
-        """When debug is 'on', the input/output messages on the serial port are printed on the console.""" 
+        """When debug is 'on', the input/output messages on the serial port are printed on the console."""
         self.settings['debug'] = 1
-        
+       
     def set_debug_off(self):
-        """When debug is 'off', keep quiet.""" 
+        """When debug is 'off', keep quiet."""
         self.settings['debug'] = 0
 
     def read_settings_from_toml_file(self, config_file):
@@ -224,7 +200,7 @@ class BlackBoxToolKit:
         Example of a ``bbtkv2.toml`` configuration file:
 
         .. code-block:: TOML
-        
+       
              serialport="/dev/ttyACM0"
              baudrate=230400
              debug=1
@@ -243,7 +219,7 @@ class BlackBoxToolKit:
              smoothing='11000011'
         """
         self.settings = toml.load(config_file)
-        
+       
     def connect(self):
         """Initiate a connection to the BBTKv2.
         """
@@ -283,7 +259,6 @@ class BlackBoxToolKit:
 
         :param cmd: command to send
         :type cmd: string
-        
         """
         if self.debug:
             print('Sending: ' + cmd)
@@ -293,7 +268,7 @@ class BlackBoxToolKit:
     def get_response(self, timeout=10):
         """Accumulates characters from the serial channel, for a certain duration.
 
-        :param timeout: time during which to wait for messages from the bbtkv2. 
+        :param timeout: time during which to wait for messages from the bbtkv2.
 
         :return:  the text sent by the BBTLv2.
         """
@@ -310,8 +285,8 @@ class BlackBoxToolKit:
         return data_str
 
     def read_line(self):
-        """Read a single line from the bbtkv2 (blocking! No timeout) 
-        
+        """Read a single line from the bbtkv2 (blocking! No timeout)
+      
         :return: the string of characters.
         """
         time.sleep(WT)
@@ -342,10 +317,13 @@ class BlackBoxToolKit:
 
     def set_smoothing(self, mask):
         """Set smoothing to Opto and Mic sensors.
-        When smoothin is 'off', you will detect *all* leading edges, e.g. each refresh on a CRT.
-        When smoothing is 'on', you need to subtract 20ms from offset times.
+        
+        * When smoothin is 'off', you will detect *all* leading edges, e.g.
+        each refresh on a CRT.
+        * When smoothing is 'on', you need to subtract 20ms from offset times.
 
         :param mask: a 8 binary mask ``Mic1:Mic2:Opto4:Opto3:Opto2:Opto1:NA:NA``
+        
         :type mask: str
         """
         self.send_command('SMOO')
@@ -500,10 +478,10 @@ class BlackBoxToolKit:
 
 def test_acquisition():
     bb = BlackBoxToolKit()
+    time.sleep(1)
     events = bb.digital_stimulus_capture(30)
     print(events)
-    
-    bb.disconnect()
+    events.to_csv('stimulus_capture_test.csv')
 
 
 if __name__ == '__main__':
