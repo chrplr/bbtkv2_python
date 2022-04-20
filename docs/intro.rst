@@ -26,7 +26,7 @@ The principle of operation is simple. Three pieces of equipement are needed:
 #. A host computer controlling the bbtkv2 (hooked to it via a USB cable).
 
 .. note::
-   The stimulation PC and the host PC can be a single computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to setup the BBTKv in recording mode, then perform the stimulations and, when done, read the timing data from the BBTKv2.  
+   The stimulation PC and the host PC can be a single computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to switch the BBTKv2 into “capture mode”, perform the stimulations and, when done, read the timing data from the BBTKv2 memory.
    
 The BBTKv2 communicates with the host PC via commands send by a serial
 protocol over USB.
@@ -50,7 +50,7 @@ Just run::
    pip install bbtkv2
 
 (Note: Should the pip command not work, just copy
-`bbtkv2.py <https://github.com/chrplr/bbtkv2_python/blob/main/src/bbtkv2.py>`__,
+`bbtkv2.py <https://github.com/chrplr/bbtkv2_python/blob/main/src/bbtkv2/bbtkv2.py>`__,
 and make sure you have the pyserial module installed)
 
 Testing
