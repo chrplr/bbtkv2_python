@@ -53,50 +53,82 @@ Just run::
 `bbtkv2.py <https://github.com/chrplr/bbtkv2_python/blob/main/src/bbtkv2/bbtkv2.py>`__,
 and make sure you have the pyserial module installed)
 
-Testing
--------
+Using the module
+----------------
 
-You may first want to test that the link with the bbtk2 works correclty by
-running an interactive serial communication software. This procedure is described
-in *The BBTKv2 API Guide*  using *TeraTerm VT* under sWindows. In the
-next chapter, we explain how to perfom the same operation under Linux,
-using *Minicom*.
+Configuration
+~~~~~~~~~~~~~
 
-One important paramater is the baudrate (speed of transmission of information over the the serial connection). When you plug the BBTKv2 in, a USB storage device named ``BBTKV2`` is mounted, which contains a file ``BBTK.ini`` specifying this parameter. On my computer::
+Two crucial parameters are:
+
+* The name of the serial port associated to the BBTKv2.
+
+  On most Linux system, it will be ``/dev/ttyACM0`` (which can be identified by running the ``dmesg`` command just after plugging the BBTKv2).       
+
+* the baudrate (speed of transmission of information over the the serial connection).
+
+  When you plug the BBTKv2 in, a USB storage device named ``BBTKV2`` is mounted, which contains a file ``BBTK.ini`` specifying this parameter. On my computer::
 
        $ cat BBTKV2/BBTK.ini 
        [BaudRate]
-       230400
+       57600
 
 
-If you notice that the transmission is garbled, you should decrease this speed in the ``BBTK.ini`` file and reboot the BBTKv2 box.
+       
+To avoid having to pass these parameters everytime one uses the BBTKv2, one can create a ``bbtkv2.toml`` configuration file and pass it to the ``BlackBoxToolKit()`` constructor. Here is an example of such a file:
+
+.. code-block:: TOML
+
+   serialport="/dev/ttyACM0"
+   baudrate=57600
+   debug=1
+
+   [thresholds]
+   Mic1=100
+   Mic2=0
+   Sounder1=63
+   Sounder2=63
+   Opto1=110
+   Opto2=0
+   Opto3=0
+   Opto4=0
+
+   [smoothing]
+   smoothing='11000011'
 
 
 
 Using the bbtkv2 module to capture events
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Launch `ipython` and type:
+Launch ``ipython`` and type:
 
 .. code-block:: python
 
-   from bbtkv2 import BlackBokToolKit
+   import bbtkv2
 
    bb = BlackBoxToolKit()
 
    bb.adjust_thresholds()  # adjust the thresholds manually
-   bb.clear_timing_data()
-   text = bb.capture(30)
+   bb.clear_timing_data()  # clear the internal memory of the BBTKv2 
+   text = bb.capture(30)   # start capturing events for 30sec
+
+   # convert the results into human readable formats:
    df1 = capture_output_to_dataframe(text)
    processed_events = capture_dataframe_to_events(df1)
    print(processed_events)
 
+   
+If things do not seem to work, you may first to test that the link with the bbtk2 works correclty by running an interactive serial communication software. This procedure is described for Windows in *The BBTKv2 API Guide*  using *TeraTerm VT*. In the next chapter, we explain how to perform the same test under Linux,
+using *minicom*.
 
+For example, if you notice that the transmission is garbled, you should decrease this speed in the ``BBTK.ini`` file and reboot the BBTKv2 box.
 
 
    
-.. [1] Nowadays, one could build a “poor man's” Blackboxtoolkit around
-       an Arduino or a Raspberry Pi. But it would take quite a bit of
-       time to build the right sensors and validate them. If you have
-       a BBTKv2 around you, or enough money to acquire one, it will
-       save you time.
+.. [1] Nowadays, one can build a “poor man's” Blackboxtoolkit around
+       an Arduino or a Raspberry Pi. But it takes quite a bit of time
+       to build the right sensors and validate them. If you have a
+       BBTKv2 around you, or enough money to acquire one, it will save
+       you time. Another alternative, od course, is to use a digital
+       oscilloscope, but these beasts can be complicated to use.
