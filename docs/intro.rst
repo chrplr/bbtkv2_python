@@ -22,24 +22,23 @@ The principle of operation is simple. Three pieces of equipement are needed:
 
 #. A stimulation device (typically a computer) 
 #. The bbtkv2 with input sensors (photodiodes, sound detectors, TTL
-   detectors) disposed on the stimulation device.
-#. A host computer controlling the bbtkv2 (hooked to it via a USB cable).
+   detectors) attached to the stimulation device.
+#. A host computer driving the bbtkv2 (hooked to it via a USB cable).
 
 .. note::
-   The stimulation PC and the host PC can be a single computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to switch the BBTKv2 into “capture mode”, perform the stimulations and, when done, read the timing data from the BBTKv2 memory.
+   The stimulation PC and the host PC can be the same computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to switch the BBTKv2 into “capture mode”, perform the stimulations and, when done, download the timing data from the BBTKv2 memory.
    
-The BBTKv2 communicates with the host PC via commands send by a serial
-protocol over USB.
+The BBTKv2 and the host PC communicate via a serial protocol over
+USB. The *bbtkv2* Python module provided here encapsulates (some of)
+the commands documented in *The BBTKv2 API Guide* sold by the parent
+company.
 
-For example, one of the most useful commands, “Digital Stimulus
-Capture”, monitors the input sensors for a certain time period and
-records all events (leading or closing edges) occuring on any line.
-Once the period has elapsed, the bbtkv2 sends the list of all events,
-along with their timestamps, to the host computer.
+For example, one of the most useful commands, ``capture()``, monitors
+the input sensors for a certain time period and records all changes on
+any input line (raising or falling closing edges).  Once the capture
+period has elapsed, the BBTKv2 sends the list of all the events,
+timestamped, to the host computer.
 
-
-The *bbtkv2* Python module provided here encapsulates (some of) the
-commands described in *The BBTKv2 API Guide* sold by the parent company. 
 
 
 Installing the Python module
