@@ -28,7 +28,7 @@ author = 'Christophe Pallier'
 # from bbtkv2 import __version__
 # version = __version__
 # release = version
-release = 0.0.8
+release = '0.0.8'
 
 
 # -- General configuration ---------------------------------------------------

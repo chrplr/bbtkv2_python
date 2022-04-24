@@ -12,8 +12,12 @@ In a nutshell:
     from bbtkv2 import BlackBokToolKit
 
     bb = BlackBoxToolKit()
-    df = bb.digital_stimulus_capture(30)  # run capture for 30s
-    print(df)  # print a dataframe containing all recorded events
+    bb.adjust_thresholds()  # adjust the thresholds manually
+    bb.clear_timing_data()
+    text = bb.capture(30)
+    df1 = capture_output_to_dataframe(text)
+    processed_events = capture_dataframe_to_events(df1)
+    print(processed_events)
 
 
 # Documentation
@@ -23,7 +27,7 @@ Check <https://bbtkv2.readthedocs.io/en/latest/intro.html>
 
 # Installation
 
-    pip install bbtkv2
+    pip install bbtkv2==0.0.8 
 
 ---
 
