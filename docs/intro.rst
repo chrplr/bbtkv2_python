@@ -83,8 +83,14 @@ Launch `ipython` and type:
    from bbtkv2 import BlackBokToolKit
 
    bb = BlackBoxToolKit()
-   df = bb.digital_stimulus_capture(30)  # run capture for 30s
-   print(df)
+
+   bb.adjust_thresholds()  # adjust the thresholds manually
+   bb.clear_timing_data()
+   text = bb.capture(30)
+   df1 = capture_output_to_dataframe(text)
+   processed_events = capture_dataframe_to_events(df1)
+   print(processed_events)
+
 
 
 
