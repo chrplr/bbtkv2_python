@@ -25,7 +25,10 @@ copyright = '2022, Christophe Pallier'
 author = 'Christophe Pallier'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.6'
+# from bbtkv2 import __version__
+# version = __version__
+# release = version
+release = 0.0.8
 
 
 # -- General configuration ---------------------------------------------------
