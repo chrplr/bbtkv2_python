@@ -104,7 +104,7 @@ Launch ``ipython`` and type:
 
 .. code-block:: python
 
-   import bbtkv2
+   from bbtkv2.bbtkv2 import BlackBoxToolKit
 
    bb = BlackBoxToolKit()
 
