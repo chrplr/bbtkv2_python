@@ -27,7 +27,7 @@ Check <https://bbtkv2.readthedocs.io/en/latest/intro.html>
 
 # Installation
 
-    pip install bbtkv2==0.1 
+    pip install bbtkv2 
 
 ---
 

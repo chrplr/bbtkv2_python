@@ -49,7 +49,7 @@ Just run::
    pip install bbtkv2
 
 (Note: Should the pip command not work, just copy
-`bbtkv2.py <https://github.com/chrplr/bbtkv2_python/blob/main/src/bbtkv2/bbtkv2.py>`__,
+`bbtkv2.py <https://github.com/chrplr/bbtkv2_python/blob/main/bbtkv2/bbtkv2.py>`__,
 and make sure you have the pyserial module installed)
 
 Using the module
