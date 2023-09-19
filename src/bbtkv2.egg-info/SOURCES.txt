@@ -1,8 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-setup.cfg
-src/bbtkv2.egg-info/PKG-INFO
-src/bbtkv2.egg-info/SOURCES.txt
-src/bbtkv2.egg-info/dependency_links.txt
-src/bbtkv2.egg-info/top_level.txt

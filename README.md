@@ -11,12 +11,12 @@ In a nutshell:
 
     import bbtkv2 
 
-    bb = bbtkv2.bbtkv2.BlackBoxToolKit()
+    bb = bbtkv2.BlackBoxToolKit()
     bb.adjust_thresholds()  # adjust the thresholds manually
     bb.clear_timing_data()
     text = bb.capture(10)
-    df1 = bbtkv2.bbtkv2.capture_output_to_dataframe(text)
-    processed_events = bbtkv2.bbtkv2.capture_dataframe_to_events(df1)
+    df1 = bbtkv2.capture_output_to_dataframe(text)
+    processed_events = bbtkv2.capture_dataframe_to_events(df1)
     print(processed_events)
 
 
@@ -27,7 +27,7 @@ Check <https://bbtkv2.readthedocs.io/en/latest/intro.html>
 
 # Installation
 
-    pip install bbtkv2==0.0.9 
+    pip install bbtkv2==0.1 
 
 ---
 
