@@ -26,8 +26,12 @@ The principle of operation is simple. Three pieces of equipement are needed:
 #. A host computer driving the bbtkv2 (hooked to it via a USB cable).
 
 .. note::
-   The stimulation PC and the host PC can be the same computer. As data are recorded asynchronously by the BBTKv2, it is possible for the host PC to switch the BBTKv2 into “capture mode”, perform the stimulations and, when done, download the timing data from the BBTKv2 memory.
+   The stimulation PC and the host PC *can* be the same computer (but do not have to). As data are recorded asynchronously by the BBTKv2, it is possible for a single PC to switch the BBTKv2 into “capture mode”, launch the stimulation program and, when done, download the timing data from the BBTKv2 memory.
    
+
+.. note::
+   Under Windows, you need to install a driver to communicate with the BBTKv2. You can install the mbed-cli available from https://os.mbed.com/docs/mbed-os/v6.16/quick-start/build-with-mbed-cli.html a,d check install driver during the setup.
+
 The BBTKv2 and the host PC communicate via a serial protocol over
 USB. The *bbtkv2* Python module provided here encapsulates (some of)
 the commands documented in *The BBTKv2 API Guide* sold by the parent
@@ -58,13 +62,13 @@ Using the module
 Configuration
 ~~~~~~~~~~~~~
 
-Two crucial parameters are:
+To use the module you need to know two thing:
 
 * The name of the serial port associated to the BBTKv2.
 
   On most Linux system, it will be ``/dev/ttyACM0`` (which can be identified by running the ``dmesg`` command just after plugging the BBTKv2).       
 
-* the baudrate (speed of transmission of information over the the serial connection).
+* the baudrate, that is, the speed of transmission of information over the the serial connection.
 
   When you plug the BBTKv2 in, a USB storage device named ``BBTKV2`` is mounted, which contains a file ``BBTK.ini`` specifying this parameter. On my computer::
 
@@ -74,7 +78,7 @@ Two crucial parameters are:
 
 
        
-To avoid having to pass these parameters everytime one uses the BBTKv2, one can create a ``bbtkv2.toml`` configuration file and pass it to the ``BlackBoxToolKit()`` constructor. Here is an example of such a file:
+Then, you can create a ``bbtkv2.toml`` configuration file such as the one below (change the ``serialport`` and ``baudrate`` variables according to your setup. For example, under Windows, ``serialport`` might be `COM3`):
 
 .. code-block:: TOML
 
@@ -96,6 +100,8 @@ To avoid having to pass these parameters everytime one uses the BBTKv2, one can 
    smoothing='11000011'
 
 
+You will modify the thresholds and smoothing parameters later if needed (read the official documentation of the bbtkv2).
+		
 
 Using the bbtkv2 module to capture events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,7 +113,9 @@ Launch ``ipython`` and type:
 
    import bbtkv2
 
-   bb = bbtkv2.BlackBoxToolKit()
+   BBTK_CONF_FILE = "./bbtkv2.toml"  # change to the conf file you created
+
+   bb = bbtkv2.BlackBoxToolKit(BBTK_CONF_FILE)
 
    bb.adjust_thresholds()  # adjust the thresholds manually
    bb.clear_timing_data()  # clear the internal memory of the BBTKv2 
